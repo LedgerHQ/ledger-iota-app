@@ -72,6 +72,7 @@ static void IOTA_main()
 
                 // when no APDU received, trigger a reset
                 if (rx == 0) {
+                    CLOSE_TRY;
                     break;
                 }
 
@@ -91,6 +92,7 @@ static void IOTA_main()
             }
             CATCH(EXCEPTION_IO_RESET)
             {
+                CLOSE_TRY;
                 break;
             }
             CATCH_OTHER(e)
@@ -109,6 +111,7 @@ static void IOTA_main()
                 case SW_DEVICE_IS_LOCKED:
                 case SW_CLA_NOT_SUPPORTED:
                     // do not reset anything
+                    CLOSE_TRY;
                     break;
                 default:
                     // reset states and UI
@@ -252,11 +255,13 @@ __attribute__((section(".boot"))) int main(void)
             CATCH(EXCEPTION_IO_RESET)
             {
                 // reset IO and UX
+                CLOSE_TRY;
                 continue;
             }
             CATCH_ALL
             {
                 // exit on all other exceptions
+                CLOSE_TRY;
                 break;
             }
             FINALLY

@@ -74,7 +74,6 @@ static void IOTA_main()
                 if (rx == 0) {
                     CLOSE_TRY;
                     THROW(EXCEPTION_IO_RESET);
-                    break;
                 }
 
                 // check header validity

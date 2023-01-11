@@ -93,7 +93,6 @@ static void IOTA_main()
             CATCH(EXCEPTION_IO_RESET)
             {
                 THROW(EXCEPTION_IO_RESET);
-                break;
             }
             CATCH_OTHER(e)
             {

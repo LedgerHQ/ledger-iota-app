@@ -72,7 +72,6 @@ static void IOTA_main()
 
                 // when no APDU received, trigger a reset
                 if (rx == 0) {
-                    CLOSE_TRY;
                     THROW(EXCEPTION_IO_RESET);
                 }
 

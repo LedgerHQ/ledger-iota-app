@@ -4,6 +4,7 @@
 #include "os.h"
 #include "cx.h"
 #include "api.h"
+#include "lib_standard_app/crypto_helpers.h"
 
 #include "macros.h"
 #include "signing.h"
@@ -12,7 +13,6 @@
 #include "iota_io.h"
 #include "iota/ed25519.h"
 #endif
-
 
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
@@ -23,31 +23,29 @@ static uint16_t sign_signature(SIGNATURE_BLOCK *pBlock,
                                uint32_t *bip32_signing_path,
                                API_INPUT_BIP32_INDEX *input_bip32_index)
 {
-    cx_ecfp_private_key_t pk;
-    cx_ecfp_public_key_t pub;
 
     // overwrite bip32_signing_path
     bip32_signing_path[BIP32_ADDRESS_INDEX] = input_bip32_index->bip32_index;
     bip32_signing_path[BIP32_CHANGE_INDEX] = input_bip32_index->bip32_change;
 
-    uint32_t signature_length = 0;
+    size_t signature_length = CX_SHA512_SIZE;
 
-    uint8_t ret = 0;
-    // create key pair and convert pub key to bytes
-    ret = ed25519_get_key_pair(bip32_signing_path, BIP32_PATH_LEN, &pk, &pub);
-    ret = ret && ed25519_sign(&pk, essence_hash, BLAKE2B_SIZE_BYTES,
-                              pBlock->signature, &signature_length);
+    MUST(bip32_derive_with_seed_eddsa_sign_hash_256(
+             HDW_ED25519_SLIP10, CX_CURVE_Ed25519, bip32_signing_path,
+             BIP32_PATH_LEN, CX_SHA512, essence_hash, BLAKE2B_SIZE_BYTES,
+             pBlock->signature, &signature_length, NULL, 0) == CX_OK);
 
-    // always delete from stack
-    explicit_bzero(&pk, sizeof(pk));
+    MUST(signature_length == SIGNATURE_SIZE_BYTES);
 
-    // ed25519_get_key_pair and ed25519_sign must succeed
-    MUST(ret);
+    // get pubkey
+    uint8_t raw_pubkey[65];
 
-    // length of signature must not be 0
-    MUST(signature_length);
+    MUST(bip32_derive_with_seed_get_pubkey_256(
+             HDW_ED25519_SLIP10, CX_CURVE_Ed25519, bip32_signing_path,
+             BIP32_PATH_LEN, raw_pubkey, NULL, CX_SHA512, NULL, 0) == CX_OK);
 
-    MUST(ed25519_public_key_to_bytes(&pub, pBlock->public_key));
+    // convert Ledger pubkey to pubkey bytes
+    MUST(ed25519_public_key_to_bytes(raw_pubkey, pBlock->public_key));
 
     return (uint16_t)sizeof(SIGNATURE_BLOCK);
 }

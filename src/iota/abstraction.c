@@ -20,8 +20,6 @@
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wmissing-prototypes"
 
-extern API_CTX api;
-
 const uint8_t *get_output_address_ptr(const API_CTX *api, uint8_t index)
 {
     MUST(index < api->essence.outputs_count);
@@ -74,14 +72,14 @@ uint64_t get_output_amount(const API_CTX *api, uint8_t index)
     return amount;
 }
 
-uint8_t address_encode_bech32(const uint8_t *addr_with_type, char *bech32,
-                              uint32_t bech32_max_length)
+uint8_t address_encode_bech32(const API_CTX *api, const uint8_t *addr_with_type,
+                              char *bech32, uint32_t bech32_max_length)
 {
-    switch (api.coin) {
+    switch (api->coin) {
     case COIN_IOTA: {
         MUST(address_encode_bech32_hrp(
             addr_with_type, bech32, bech32_max_length,
-            (api.app_mode & 0x80) ? COIN_HRP_IOTA_TESTNET : COIN_HRP_IOTA,
+            (api->app_mode & 0x80) ? COIN_HRP_IOTA_TESTNET : COIN_HRP_IOTA,
             strlen(COIN_HRP_IOTA))); // strlen valid because HRP has the same
                                      // length in testnet
         break;
@@ -89,7 +87,8 @@ uint8_t address_encode_bech32(const uint8_t *addr_with_type, char *bech32,
     case COIN_SHIMMER: {
         MUST(address_encode_bech32_hrp(
             addr_with_type, bech32, bech32_max_length,
-            (api.app_mode & 0x80) ? COIN_HRP_SHIMMER_TESTNET : COIN_HRP_SHIMMER,
+            (api->app_mode & 0x80) ? COIN_HRP_SHIMMER_TESTNET
+                                   : COIN_HRP_SHIMMER,
             strlen(COIN_HRP_SHIMMER))); // strlen valid because HRP has the same
                                         // length in testnet
         break;
@@ -130,15 +129,21 @@ uint8_t get_amount(const API_CTX *api, int index, char *dst, size_t dst_len,
 
     switch (api->coin) {
     case COIN_IOTA: {
-        // show IOTA in full or short mode
-        if (full) { // full
-            // max supply is 2779530283277761 - this fits nicely in one line
-            // on the Ledger nano s always cut after the 16th char to not
-            // make a page with a single 'i'.
-            format_value_full(dst, dst_len, amount);
+        // IOTA + Chrysalis uses metric units
+        if (api->protocol == PROTOCOL_CHRYSALIS) {
+            // show IOTA in full or short mode
+            if (full) { // full
+                // max supply is 2779530283277761 - this fits nicely in one line
+                // on the Ledger nano s always cut after the 16th char to not
+                // make a page with a single 'i'.
+                format_value_full(dst, dst_len, amount);
+            }
+            else { // short
+                format_value_short(dst, dst_len, amount);
+            }
         }
-        else { // short
-            format_value_short(dst, dst_len, amount);
+        else {
+            format_value_full_decimals(dst, dst_len, amount);
         }
         break;
     }

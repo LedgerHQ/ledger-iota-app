@@ -23,7 +23,7 @@ include $(BOLOS_SDK)/Makefile.defines
 
 APPVERSION_M = 0
 APPVERSION_N = 8
-APPVERSION_P = 5
+APPVERSION_P = 6
 APPVERSION   = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 APP_LOAD_PARAMS = --path "44'/1'" --curve ed25519 --appFlags 0x240 $(COMMON_LOAD_PARAMS)
@@ -126,6 +126,9 @@ include $(BOLOS_SDK)/Makefile.glyphs
 
 APP_SOURCE_PATH += src
 SDK_SOURCE_PATH += lib_stusb lib_stusb_impl lib_ux
+
+# Allow usage of function from lib_standard_app/crypto_helpers.c
+APP_SOURCE_FILES += ${BOLOS_SDK}/lib_standard_app/crypto_helpers.c
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
     SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl

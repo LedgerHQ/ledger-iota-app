@@ -127,6 +127,7 @@ static void IOTA_main()
     }
 }
 
+#ifndef REVAMPED_IO
 // seems to be called from io_exchange
 unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len)
 {
@@ -155,6 +156,7 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len)
     }
     return 0;
 }
+#endif  // REVAMPED_IO
 
 void io_seproxyhal_display(const bagl_element_t *element)
 {
